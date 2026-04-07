@@ -90,6 +90,17 @@ export async function POST(request: NextRequest) {
       if (apiError.status === 413) {
         return NextResponse.json({ success: false, error: 'PDF 檔案過大，請嘗試上傳較小的版本' }, { status: 413 });
       }
+      if (apiError.status === 400) {
+        const msg = apiError.message ?? '';
+        if (msg.includes('prompt is too long') || msg.includes('maximum')) {
+          const match = msg.match(/(\d+)\s*tokens.*?(\d+)\s*maximum/);
+          const detail = match ? `（${parseInt(match[1]).toLocaleString()} tokens，上限 ${parseInt(match[2]).toLocaleString()}）` : '';
+          return NextResponse.json({
+            success: false,
+            error: `此 PDF 對 Haiku 模型而言太大${detail}。請切換為 Sonnet 或 Opus 再試一次。`,
+          }, { status: 400 });
+        }
+      }
     }
 
     const message = error instanceof Error ? error.message : '未知錯誤';

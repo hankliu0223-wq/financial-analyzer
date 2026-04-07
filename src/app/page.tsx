@@ -263,6 +263,11 @@ export default function HomePage() {
                 預估費用依 PDF 大小（{(file.size / 1024 / 1024).toFixed(1)} MB）估算，實際可能有差異
               </p>
             )}
+            {file && model === 'claude-haiku-4-5-20251001' && file.size > 1.5 * 1024 * 1024 && (
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-1.5">
+                ⚠ 此 PDF 較大，可能超出 Haiku 的 200K token 上限而失敗。建議改用 Sonnet。
+              </p>
+            )}
           </div>
 
           {/* API Key */}
