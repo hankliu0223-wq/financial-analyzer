@@ -83,12 +83,23 @@ export interface RiskScores {
   piotroskiInterpretation: string;
 }
 
+export interface TargetPriceRange {
+  low: number | null;
+  base: number | null;
+  high: number | null;
+  eps: number | null;
+  bvps: number | null;
+  sharesOutstanding: number | null;
+  methodology: string;
+}
+
 export interface InvestmentScenario {
   normalizedEbit: number | null;
   normalizedEbitda: number | null;
   netDebt: number | null;
   cfoQuality: string;
   valuationRange: string;
+  targetPriceRange: TargetPriceRange | null;
   signals: string[];
   recommendation: string;
 }

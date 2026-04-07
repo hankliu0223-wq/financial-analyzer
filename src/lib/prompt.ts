@@ -100,7 +100,16 @@ export const ANALYSIS_PROMPT = `你是一位資深財務分析師，擁有 IFRS 
       "normalizedEbitda": 常態化EBITDA數字或null,
       "netDebt": 淨負債數字或null（有息負債-現金）,
       "cfoQuality": "現金流品質評估：優/良/普通/差，並說明原因",
-      "valuationRange": "基於同業 EV/EBITDA 7-12x 的估值區間參考（文字說明）",
+      "valuationRange": "基於同業 EV/EBITDA 7-12x 的估值區間參考（文字說明，貨幣需與財報一致）",
+      "targetPriceRange": {
+        "low": 保守目標價（每股，財報原始貨幣）或null,
+        "base": 基本目標價（每股，財報原始貨幣）或null,
+        "high": 樂觀目標價（每股，財報原始貨幣）或null,
+        "eps": 每股盈餘或null,
+        "bvps": 每股淨值（每股帳面價值）或null,
+        "sharesOutstanding": 流通在外股數（單位與財報一致，例如千股則填千股數）或null,
+        "methodology": "說明使用了哪些估值方法（EV/EBITDA法、P/E法、P/B法等）及關鍵假設，貨幣需與財報一致"
+      },
       "signals": ["正面訊號1", "負面訊號1"],
       "recommendation": "投資角度綜合建議（2-3句）"
     },
@@ -121,4 +130,10 @@ export const ANALYSIS_PROMPT = `你是一位資深財務分析師，擁有 IFRS 
 2. 注意 CFO 是否跟上獲利，若 CFO/淨利 < 0.8 且持續多期，需標記紅旗
 3. 若有一次性損益（資產處分、訴訟和解等），需在常態化數字中調整
 4. IFRS 16 租賃會計可能推高 EBITDA，如有大量租賃請在詳細分析中說明
-5. 紅旗列表應至少 2 項，不超過 8 項，按嚴重性排序`;
+5. 紅旗列表應至少 2 項，不超過 8 項，按嚴重性排序
+6. 目標價區間計算方式（盡量使用多種方法交叉驗證）：
+   - EV/EBITDA 法：EV = 常態化 EBITDA × 同業倍數區間（保守 7x / 基本 9.5x / 樂觀 12x）；Equity Value = EV − 淨負債；每股價值 = Equity Value ÷ 流通股數
+   - P/E 法：每股價值 = EPS × 同業 P/E（保守 15x / 基本 18x / 樂觀 22x）
+   - P/B 法：每股價值 = BVPS × 同業 P/B（視行業調整）
+   - 若財報中找不到流通股數，targetPriceRange 各價格欄位填 null，並在 methodology 說明原因
+   - 目標價貨幣必須與財報原始貨幣完全一致，不可換算成其他貨幣`;

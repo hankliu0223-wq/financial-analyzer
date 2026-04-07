@@ -125,6 +125,14 @@ function generateMarkdownReport(analysis: FinancialAnalysis): string {
   md += `**建議：** ${inv.recommendation}\n`;
   md += `**CFO 品質：** ${inv.cfoQuality}\n`;
   md += `**估值區間：** ${inv.valuationRange}\n\n`;
+  if (inv.targetPriceRange) {
+    const tp = inv.targetPriceRange;
+    const fmtP = (v: number | null) => v !== null ? v.toLocaleString('zh-TW', { maximumFractionDigits: 2 }) : 'N/A';
+    md += `**目標價區間（每股）：** 保守 ${fmtP(tp.low)} ／ 基本 ${fmtP(tp.base)} ／ 樂觀 ${fmtP(tp.high)}\n`;
+    if (tp.eps !== null) md += `**EPS：** ${fmtP(tp.eps)}　**每股淨值：** ${fmtP(tp.bvps)}\n`;
+    if (tp.methodology) md += `**估值方法：** ${tp.methodology}\n`;
+    md += '\n';
+  }
   if (inv.signals?.length > 0) {
     md += `**關鍵訊號：**\n`;
     inv.signals.forEach(s => { md += `- ${s}\n`; });
@@ -367,6 +375,33 @@ function generateHtmlForPdf(analysis: FinancialAnalysis): string {
                   ${tableRow('估值區間', scenarios.investment.valuationRange)}
                 </table>
                 <div style="font-size:12px; margin-top:8px; color:#374151;"><strong>CFO 品質：</strong>${scenarios.investment.cfoQuality}</div>
+                ${scenarios.investment.targetPriceRange ? (() => {
+                  const tp = scenarios.investment.targetPriceRange!;
+                  const fmt = (v: number | null) => v !== null ? v.toLocaleString('zh-TW', { maximumFractionDigits: 2 }) : 'N/A';
+                  const hasPrice = tp.low !== null || tp.base !== null || tp.high !== null;
+                  return `<div style="margin-top:8px; border:1px solid #bfdbfe; border-radius:6px; padding:8px; background:#f0f9ff;">
+                    <div style="font-size:11px; color:#6b7280; font-weight:600; margin-bottom:6px;">目標價區間（每股，${companyInfo.currency}）</div>
+                    ${hasPrice ? `<table style="width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;">
+                      <colgroup><col style="width:33%"><col style="width:34%"><col style="width:33%"></colgroup>
+                      <tr>
+                        <td style="text-align:center; padding:6px 4px; background:#fffbeb; border:1px solid #fde68a; border-radius:4px;">
+                          <div style="font-size:10px; color:#92400e;">保守</div>
+                          <div style="font-size:14px; font-weight:700; color:#b45309;">${fmt(tp.low)}</div>
+                        </td>
+                        <td style="text-align:center; padding:6px 4px; background:#f0fdf4; border:2px solid #4ade80; border-radius:4px;">
+                          <div style="font-size:10px; color:#166534;">基本</div>
+                          <div style="font-size:16px; font-weight:700; color:#15803d;">${fmt(tp.base)}</div>
+                        </td>
+                        <td style="text-align:center; padding:6px 4px; background:#eff6ff; border:1px solid #93c5fd; border-radius:4px;">
+                          <div style="font-size:10px; color:#1e40af;">樂觀</div>
+                          <div style="font-size:14px; font-weight:700; color:#1d4ed8;">${fmt(tp.high)}</div>
+                        </td>
+                      </tr>
+                    </table>` : '<div style="font-size:11px; color:#9ca3af;">流通股數資料不足，無法計算每股目標價</div>'}
+                    ${tp.eps !== null ? `<div style="font-size:11px; color:#6b7280; margin-top:4px;">EPS：${fmt(tp.eps)}　每股淨值：${fmt(tp.bvps)}</div>` : ''}
+                    ${tp.methodology ? `<div style="font-size:10px; color:#9ca3af; margin-top:4px;">${tp.methodology}</div>` : ''}
+                  </div>`;
+                })() : ''}
                 <div style="font-size:12px; margin-top:6px; background:#dbeafe; border-radius:4px; padding:8px;"><strong>建議：</strong>${scenarios.investment.recommendation}</div>
               </div>
             </td>

@@ -1,4 +1,4 @@
-import { FinancialAnalysis } from '@/lib/types';
+import { FinancialAnalysis, TargetPriceRange } from '@/lib/types';
 import { formatNumber, formatMultiple, riskLevelColor, riskLevelLabel } from '@/utils/formatters';
 
 interface Props {
@@ -45,6 +45,10 @@ export default function DecisionPanel({ analysis }: Props) {
               </div>
             ))}
           </div>
+        )}
+
+        {inv.targetPriceRange && (
+          <TargetPriceCard tp={inv.targetPriceRange} currency={currency} />
         )}
 
         <div className="bg-blue-100 rounded-lg p-3">
@@ -124,6 +128,54 @@ export default function DecisionPanel({ analysis }: Props) {
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+function TargetPriceCard({ tp, currency }: { tp: TargetPriceRange; currency: string }) {
+  const hasPrice = tp.low !== null || tp.base !== null || tp.high !== null;
+  const fmt = (v: number | null) => v !== null ? v.toLocaleString('zh-TW', { maximumFractionDigits: 2 }) : 'N/A';
+
+  return (
+    <div className="bg-white border border-blue-200 rounded-lg p-4 mb-3">
+      <div className="text-xs text-gray-500 mb-3 font-medium">目標價區間分析</div>
+      {hasPrice ? (
+        <>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <div className="text-center rounded-lg bg-amber-50 border border-amber-200 p-2">
+              <div className="text-xs text-amber-600 mb-1">保守</div>
+              <div className="font-bold text-amber-700 text-lg">{fmt(tp.low)}</div>
+            </div>
+            <div className="text-center rounded-lg bg-emerald-50 border border-emerald-200 p-2 ring-2 ring-emerald-400">
+              <div className="text-xs text-emerald-600 mb-1">基本</div>
+              <div className="font-bold text-emerald-700 text-xl">{fmt(tp.base)}</div>
+            </div>
+            <div className="text-center rounded-lg bg-blue-50 border border-blue-200 p-2">
+              <div className="text-xs text-blue-600 mb-1">樂觀</div>
+              <div className="font-bold text-blue-700 text-lg">{fmt(tp.high)}</div>
+            </div>
+          </div>
+          <div className="text-xs text-gray-400 mb-2 text-center">單位：{currency}（每股）</div>
+        </>
+      ) : (
+        <div className="text-sm text-gray-400 mb-2">流通股數資料不足，無法計算每股目標價</div>
+      )}
+      {(tp.eps !== null || tp.bvps !== null) && (
+        <div className="flex gap-4 mb-2">
+          {tp.eps !== null && (
+            <div className="text-xs text-gray-500">EPS：<span className="font-medium text-gray-700">{fmt(tp.eps)}</span></div>
+          )}
+          {tp.bvps !== null && (
+            <div className="text-xs text-gray-500">每股淨值：<span className="font-medium text-gray-700">{fmt(tp.bvps)}</span></div>
+          )}
+          {tp.sharesOutstanding !== null && (
+            <div className="text-xs text-gray-500">流通股數：<span className="font-medium text-gray-700">{tp.sharesOutstanding.toLocaleString('zh-TW')}</span></div>
+          )}
+        </div>
+      )}
+      {tp.methodology && (
+        <div className="text-xs text-gray-500 bg-gray-50 rounded p-2">{tp.methodology}</div>
+      )}
     </div>
   );
 }
