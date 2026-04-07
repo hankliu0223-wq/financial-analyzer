@@ -88,8 +88,13 @@ export interface TargetPriceRange {
   base: number | null;
   high: number | null;
   eps: number | null;
+  annualizedEps: number | null;
+  annualizedEbitda: number | null;
   bvps: number | null;
   sharesOutstanding: number | null;
+  quartersReported: number | null;
+  isQuarterlyAnnualized: boolean;
+  annualizationNote: string;
   methodology: string;
 }
 

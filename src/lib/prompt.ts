@@ -102,13 +102,18 @@ export const ANALYSIS_PROMPT = `你是一位資深財務分析師，擁有 IFRS 
       "cfoQuality": "現金流品質評估：優/良/普通/差，並說明原因",
       "valuationRange": "基於同業 EV/EBITDA 7-12x 的估值區間參考（文字說明，貨幣需與財報一致）",
       "targetPriceRange": {
-        "low": 保守目標價（每股，財報原始貨幣）或null,
-        "base": 基本目標價（每股，財報原始貨幣）或null,
-        "high": 樂觀目標價（每股，財報原始貨幣）或null,
-        "eps": 每股盈餘或null,
-        "bvps": 每股淨值（每股帳面價值）或null,
-        "sharesOutstanding": 流通在外股數（單位與財報一致，例如千股則填千股數）或null,
-        "methodology": "說明使用了哪些估值方法（EV/EBITDA法、P/E法、P/B法等）及關鍵假設，貨幣需與財報一致"
+        "low": 保守目標價（每股，財報原始貨幣，以全年預估數計算）或null,
+        "base": 基本目標價（每股，財報原始貨幣，以全年預估數計算）或null,
+        "high": 樂觀目標價（每股，財報原始貨幣，以全年預估數計算）或null,
+        "eps": 財報中原始EPS（報告期累計，可能為前N季）或null,
+        "annualizedEps": 全年預估EPS（已年化，用於目標價計算）或null,
+        "annualizedEbitda": 全年預估EBITDA（已年化，用於EV/EBITDA估值）或null,
+        "bvps": 每股淨值或null,
+        "sharesOutstanding": 流通在外股數（單位與財報一致）或null,
+        "quartersReported": 財報已涵蓋的季數（1/2/3/4）或null,
+        "isQuarterlyAnnualized": true若有做季度年化否則false,
+        "annualizationNote": "說明年化方式（例如：前三季資料，Q4依前三季平均推估，全年預估 = 前三季 × 4/3）",
+        "methodology": "完整說明使用了哪些估值方法（EV/EBITDA法、P/E法、P/B法等）、年化依據及關鍵假設，貨幣需與財報一致"
       },
       "signals": ["正面訊號1", "負面訊號1"],
       "recommendation": "投資角度綜合建議（2-3句）"
@@ -131,9 +136,29 @@ export const ANALYSIS_PROMPT = `你是一位資深財務分析師，擁有 IFRS 
 3. 若有一次性損益（資產處分、訴訟和解等），需在常態化數字中調整
 4. IFRS 16 租賃會計可能推高 EBITDA，如有大量租賃請在詳細分析中說明
 5. 紅旗列表應至少 2 項，不超過 8 項，按嚴重性排序
-6. 目標價區間計算方式（盡量使用多種方法交叉驗證）：
-   - EV/EBITDA 法：EV = 常態化 EBITDA × 同業倍數區間（保守 7x / 基本 9.5x / 樂觀 12x）；Equity Value = EV − 淨負債；每股價值 = Equity Value ÷ 流通股數
-   - P/E 法：每股價值 = EPS × 同業 P/E（保守 15x / 基本 18x / 樂觀 22x）
-   - P/B 法：每股價值 = BVPS × 同業 P/B（視行業調整）
-   - 若財報中找不到流通股數，targetPriceRange 各價格欄位填 null，並在 methodology 說明原因
-   - 目標價貨幣必須與財報原始貨幣完全一致，不可換算成其他貨幣`;
+6. 目標價區間計算方式（分三步驟，嚴格依序執行）：
+
+   【步驟一：判斷報告期間，決定年化方式】
+   根據 companyInfo.period 與 reportType 判斷：
+   - 年報 或 Q4季報（quartersReported = 4）：直接使用報告中的 EPS 與常態化 EBITDA，isQuarterlyAnnualized = false，annualizationNote = "年度數據，無需年化"
+   - Q3季報（前三季，quartersReported = 3）：isQuarterlyAnnualized = true
+     * 全年預估EPS（annualizedEps）= 前三季累計EPS × (4/3)
+     * 全年預估EBITDA（annualizedEbitda）= 常態化前三季EBITDA × (4/3)
+     * annualizationNote = "前三季資料，Q4依前三季平均推估（×4/3），全年預估數用於目標價計算"
+   - Q2季報（前二季，quartersReported = 2）：isQuarterlyAnnualized = true
+     * annualizedEps = 前二季EPS × 2；annualizedEbitda = 常態化前二季EBITDA × 2
+     * annualizationNote = "前二季資料，Q3-Q4依前二季平均推估（×2），全年預估數用於目標價計算"
+   - Q1季報（quartersReported = 1）：isQuarterlyAnnualized = true
+     * annualizedEps = Q1 EPS × 4；annualizedEbitda = 常態化Q1 EBITDA × 4
+     * annualizationNote = "僅Q1資料，Q2-Q4依Q1推估（×4），年化準確度較低"
+
+   【步驟二：使用全年預估數計算目標價（不可用原始累計數）】
+   - EV/EBITDA 法：EV = annualizedEbitda × 倍數（保守 7x / 基本 9.5x / 樂觀 12x）；Equity Value = EV − 淨負債；每股目標價 = Equity Value ÷ 流通股數
+   - P/E 法：每股目標價 = annualizedEps × 同業P/E（保守 15x / 基本 18x / 樂觀 22x）
+   - P/B 法：每股目標價 = BVPS × 同業P/B（視行業調整，作為輔助參考）
+   - 若同時有多種方法，以各法結果取平均作為 low/base/high
+
+   【步驟三：注意事項】
+   - 若財報找不到流通股數：low/base/high 填 null，在 methodology 說明，仍需填 annualizedEps 與 annualizedEbitda
+   - 目標價貨幣必須與財報原始貨幣完全一致，不可換算成其他貨幣
+   - methodology 需說明：使用了哪些方法、年化倍數、P/E或EV/EBITDA倍數區間`;

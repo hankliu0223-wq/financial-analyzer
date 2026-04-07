@@ -128,8 +128,13 @@ function generateMarkdownReport(analysis: FinancialAnalysis): string {
   if (inv.targetPriceRange) {
     const tp = inv.targetPriceRange;
     const fmtP = (v: number | null) => v !== null ? v.toLocaleString('zh-TW', { maximumFractionDigits: 2 }) : 'N/A';
-    md += `**目標價區間（每股）：** 保守 ${fmtP(tp.low)} ／ 基本 ${fmtP(tp.base)} ／ 樂觀 ${fmtP(tp.high)}\n`;
-    if (tp.eps !== null) md += `**EPS：** ${fmtP(tp.eps)}　**每股淨值：** ${fmtP(tp.bvps)}\n`;
+    const basisLabel = tp.isQuarterlyAnnualized ? `全年預估（前${tp.quartersReported}季 + Q4估算）` : '全年實際數';
+    md += `**目標價區間（每股）【${basisLabel}】：** 保守 ${fmtP(tp.low)} ／ 基本 ${fmtP(tp.base)} ／ 樂觀 ${fmtP(tp.high)}\n`;
+    if (tp.eps !== null) md += `**報告期EPS：** ${fmtP(tp.eps)}`;
+    if (tp.annualizedEps !== null) md += `　**全年預估EPS：** ${fmtP(tp.annualizedEps)}`;
+    if (tp.annualizedEbitda !== null) md += `　**全年預估EBITDA：** ${fmtP(tp.annualizedEbitda)}`;
+    if (tp.eps !== null || tp.annualizedEps !== null) md += '\n';
+    if (tp.annualizationNote) md += `**年化說明：** ${tp.annualizationNote}\n`;
     if (tp.methodology) md += `**估值方法：** ${tp.methodology}\n`;
     md += '\n';
   }
@@ -398,7 +403,12 @@ function generateHtmlForPdf(analysis: FinancialAnalysis): string {
                         </td>
                       </tr>
                     </table>` : '<div style="font-size:11px; color:#9ca3af;">流通股數資料不足，無法計算每股目標價</div>'}
-                    ${tp.eps !== null ? `<div style="font-size:11px; color:#6b7280; margin-top:4px;">EPS：${fmt(tp.eps)}　每股淨值：${fmt(tp.bvps)}</div>` : ''}
+                    ${(tp.annualizedEps !== null || tp.eps !== null) ? `<div style="font-size:10px; color:#6b7280; margin-top:4px;">
+                      ${tp.eps !== null ? `報告期EPS：${fmt(tp.eps)}` : ''}
+                      ${tp.annualizedEps !== null ? `　全年預估EPS：<strong>${fmt(tp.annualizedEps)}</strong>` : ''}
+                      ${tp.annualizedEbitda !== null ? `　全年預估EBITDA：<strong>${fmt(tp.annualizedEbitda)}</strong>` : ''}
+                    </div>` : ''}
+                    ${tp.annualizationNote ? `<div style="font-size:10px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:3px; padding:3px 6px; margin-top:3px;">${tp.annualizationNote}</div>` : ''}
                     ${tp.methodology ? `<div style="font-size:10px; color:#9ca3af; margin-top:4px;">${tp.methodology}</div>` : ''}
                   </div>`;
                 })() : ''}

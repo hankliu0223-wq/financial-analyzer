@@ -138,10 +138,23 @@ function TargetPriceCard({ tp, currency }: { tp: TargetPriceRange; currency: str
 
   return (
     <div className="bg-white border border-blue-200 rounded-lg p-4 mb-3">
-      <div className="text-xs text-gray-500 mb-3 font-medium">目標價區間分析</div>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs text-gray-500 font-medium">目標價區間分析</span>
+        {tp.isQuarterlyAnnualized && (
+          <span className="text-xs bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded-full font-medium">
+            全年預估（Q{tp.quartersReported}累計 + Q4估算）
+          </span>
+        )}
+        {!tp.isQuarterlyAnnualized && tp.quartersReported === 4 && (
+          <span className="text-xs bg-emerald-100 text-emerald-700 border border-emerald-300 px-2 py-0.5 rounded-full font-medium">
+            全年實際數
+          </span>
+        )}
+      </div>
+
       {hasPrice ? (
         <>
-          <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="grid grid-cols-3 gap-2 mb-2">
             <div className="text-center rounded-lg bg-amber-50 border border-amber-200 p-2">
               <div className="text-xs text-amber-600 mb-1">保守</div>
               <div className="font-bold text-amber-700 text-lg">{fmt(tp.low)}</div>
@@ -155,24 +168,45 @@ function TargetPriceCard({ tp, currency }: { tp: TargetPriceRange; currency: str
               <div className="font-bold text-blue-700 text-lg">{fmt(tp.high)}</div>
             </div>
           </div>
-          <div className="text-xs text-gray-400 mb-2 text-center">單位：{currency}（每股）</div>
+          <div className="text-xs text-gray-400 mb-3 text-center">單位：{currency}（每股）· 為估值區間，非絕對價格</div>
         </>
       ) : (
-        <div className="text-sm text-gray-400 mb-2">流通股數資料不足，無法計算每股目標價</div>
+        <div className="text-sm text-gray-400 mb-3">流通股數資料不足，無法計算每股目標價</div>
       )}
-      {(tp.eps !== null || tp.bvps !== null) && (
-        <div className="flex gap-4 mb-2">
-          {tp.eps !== null && (
-            <div className="text-xs text-gray-500">EPS：<span className="font-medium text-gray-700">{fmt(tp.eps)}</span></div>
-          )}
-          {tp.bvps !== null && (
-            <div className="text-xs text-gray-500">每股淨值：<span className="font-medium text-gray-700">{fmt(tp.bvps)}</span></div>
-          )}
-          {tp.sharesOutstanding !== null && (
-            <div className="text-xs text-gray-500">流通股數：<span className="font-medium text-gray-700">{tp.sharesOutstanding.toLocaleString('zh-TW')}</span></div>
-          )}
+
+      {/* 年化數據對照 */}
+      <div className="bg-gray-50 rounded-lg p-2.5 mb-2 space-y-1">
+        {(tp.annualizedEps !== null || tp.eps !== null) && (
+          <div className="flex gap-4 text-xs">
+            {tp.eps !== null && (
+              <span className="text-gray-400">報告期EPS：<span className="text-gray-600">{fmt(tp.eps)}</span></span>
+            )}
+            {tp.annualizedEps !== null && (
+              <span className="text-gray-400">全年預估EPS：<span className="font-semibold text-gray-700">{fmt(tp.annualizedEps)}</span></span>
+            )}
+          </div>
+        )}
+        {tp.annualizedEbitda !== null && (
+          <div className="text-xs text-gray-400">
+            全年預估EBITDA：<span className="font-semibold text-gray-700">{fmt(tp.annualizedEbitda)}</span>
+          </div>
+        )}
+        {(tp.bvps !== null || tp.sharesOutstanding !== null) && (
+          <div className="flex gap-4 text-xs">
+            {tp.bvps !== null && <span className="text-gray-400">每股淨值：<span className="text-gray-600">{fmt(tp.bvps)}</span></span>}
+            {tp.sharesOutstanding !== null && <span className="text-gray-400">流通股數：<span className="text-gray-600">{tp.sharesOutstanding.toLocaleString('zh-TW')}</span></span>}
+          </div>
+        )}
+      </div>
+
+      {/* 年化說明 */}
+      {tp.annualizationNote && (
+        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2.5 py-1.5 mb-2">
+          {tp.annualizationNote}
         </div>
       )}
+
+      {/* 估值方法 */}
       {tp.methodology && (
         <div className="text-xs text-gray-500 bg-gray-50 rounded p-2">{tp.methodology}</div>
       )}
