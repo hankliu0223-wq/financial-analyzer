@@ -151,7 +151,7 @@ function generateMarkdownReport(analysis: FinancialAnalysis): string {
   md += '---\n\n';
 
   md += `## 🔍 深度分析\n\n${detailedAnalysis}\n\n`;
-  md += `---\n*本報告由 AI 財報分析工具自動生成，僅供教育研究用途，不構成投資建議。*\n`;
+  md += `---\n`;
   return md;
 }
 
@@ -439,10 +439,6 @@ function generateHtmlForPdf(analysis: FinancialAnalysis): string {
         <p style="color:#374151; white-space:pre-wrap; margin:0;">${detailedAnalysis}</p>
       </div>
 
-      <!-- Footer -->
-      <div style="margin-top:32px; border-top:1px solid #e5e7eb; padding-top:10px; font-size:11px; color:#9ca3af; text-align:center;">
-        本報告由 AI 財報分析工具自動生成，僅供教育研究用途，不構成投資建議。
-      </div>
     </div>
   `;
 }
@@ -731,9 +727,6 @@ export default function ResultsPage() {
         </div>
       </main>
 
-      <footer className="text-center text-xs text-gray-400 py-4 border-t border-gray-100">
-        本工具僅供教育與研究用途，不構成投資建議。分析結果應搭配專業判斷使用。
-      </footer>
     </div>
   );
 }

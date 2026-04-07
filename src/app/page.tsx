@@ -359,9 +359,6 @@ export default function HomePage() {
         ))}
       </div>
 
-      <p className="text-xs text-gray-400 mt-8 text-center max-w-md">
-        本工具僅供教育與研究用途，不構成投資建議。分析結果應搭配專業判斷使用。
-      </p>
     </main>
   );
 }
