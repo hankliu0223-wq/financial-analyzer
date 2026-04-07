@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>檔案上傳測試</title>
+  <style>
+    body { font-family: sans-serif; display: flex; justify-content: center; padding: 40px; }
+    .zone {
+      position: relative;
+      border: 2px dashed #ccc;
+      border-radius: 12px;
+      width: 400px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+    }
+    .zone input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 10;
+    }
+    .zone .content {
+      pointer-events: none;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 10px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      min-height: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h2>📁 檔案上傳測試</h2>
+    <p>點擊下方區域或拖曳 PDF 進來：</p>
+
+    <div class="zone" id="dropZone">
+      <input
+        type="file"
+        accept=".pdf"
+        id="fileInput"
+        onchange="handleFile(this.files[0])"
+      />
+      <div class="content">
+        <p>點擊或拖曳 PDF 到此處</p>
+        <small>這是純 HTML 測試，沒有 React</small>
+      </div>
+    </div>
+
+    <div id="result">等待選擇檔案...</div>
+
+    <script>
+      function handleFile(file) {
+        if (!file) return;
+        document.getElementById('result').innerHTML =
+          '✅ 成功！<br>檔名：' + file.name +
+          '<br>大小：' + (file.size / 1024).toFixed(1) + ' KB' +
+          '<br>類型：' + (file.type || '(空白)');
+      }
+    </script>
+  </div>
+</body>
+</html>
