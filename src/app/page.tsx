@@ -136,9 +136,23 @@ export default function HomePage() {
       formData.append('model', model);
 
       const response = await fetch('/api/analyze', { method: 'POST', body: formData });
-      const result = await response.json();
 
       clearInterval(progressInterval);
+
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        setProgress(0);
+        setIsAnalyzing(false);
+        if (response.status === 504 || response.status === 524) {
+          setError('請求逾時（Vercel 免費方案限制 60 秒）。請升級至 Vercel Pro，或改用 Haiku 加快速度。');
+        } else {
+          setError(`伺服器回傳非預期格式（HTTP ${response.status}），請稍後重試`);
+        }
+        return;
+      }
+
       setProgress(100);
 
       if (!result.success) {
@@ -151,9 +165,14 @@ export default function HomePage() {
       const analysis: FinancialAnalysis = result.data;
       sessionStorage.setItem('analysisResult', JSON.stringify(analysis));
       router.push('/results');
-    } catch {
+    } catch (err) {
       clearInterval(progressInterval);
-      setError('網路連線異常，請確認網路後重試');
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed')) {
+        setError('網路連線異常，請確認網路後重試');
+      } else {
+        setError('連線失敗，可能是 Vercel 免費方案逾時（60s 上限）。請改用 Haiku 或升級 Vercel Pro。');
+      }
       setIsAnalyzing(false);
       setProgress(0);
     }
